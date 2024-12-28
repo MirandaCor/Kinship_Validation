@@ -124,3 +124,132 @@ for (file in txt_files) {
 }
 
 
+#################################Part two ####################################################
+#With the processed files, we separate the files by kinship, pi-paternity, si-sibling relationship, 
+#LL-for the first two highest LRs of the same folio and id- for similar profiles.
+
+library(readxl)
+library(writexl)
+library(dplyr)
+
+
+# Set your input and output folder paths
+input_folder <- "C:/Users/Miranda Córdova/Desktop/Miranda_dnaview/Validación de datos/ejercicio/"
+output_folder <- "C:/Users/Miranda Córdova/Desktop/Miranda_dnaview/Validación de datos/ejercicio_separate/"
+
+# Get list of all Excel files in the input folder
+excel_files <- list.files(input_folder, pattern = "\\.xlsx$", full.names = TRUE)
+# # Function to filter rows based on specified kinship values
+# excel_files<- excel_files[-1]
+filter_kinship <- function(input_file, kinship_value) {
+  # Read the Excel file
+  data <- read_excel(input_file)
+
+  # Filter rows with specified kinship value
+  filtered_data <- data %>%
+    filter(Kinship == kinship_value)
+
+  return(filtered_data)
+}
+
+# Define the kinship values
+kinship_values <- c('LL', 'pi', 'id', 'sib')
+
+# Iterate through each kinship value
+for (kinship_value in kinship_values) {
+  # Initialize an empty data frame to store filtered data for the current kinship value
+  aggregated_filtered_data <- data.frame()
+
+  # Iterate through each Excel file
+  for (file in excel_files) {
+    # Filter rows based on the current kinship value
+    filtered_data <- filter_kinship(file, kinship_value)
+
+    # Aggregate filtered data
+    aggregated_filtered_data <- rbind(aggregated_filtered_data, filtered_data)
+    aggregated_filtered_data$Value <- as.numeric(aggregated_filtered_data$Value)
+  }
+
+  # Save filtered data to a new Excel file in output folder
+  output_file <- file.path(output_folder, paste0("filtered_", kinship_value, ".xlsx"))
+  write_xlsx(aggregated_filtered_data, output_file)
+
+  cat("Filtered data for kinship value", kinship_value, "saved to:", output_file, "\n")
+}
+#######################################################################################
+
+
+#For beggest files 
+#################################################
+
+library(readxl)
+library(dplyr)
+library(writexl)
+
+# Function to split a DataFrame into smaller chunks
+split_dataframe <- function(data, chunk_size) {
+  split_indices <- seq(1, nrow(data), by = chunk_size)
+  split_data <- lapply(split_indices, function(start_index) {
+    end_index <- min(start_index + chunk_size - 1, nrow(data))
+    data[start_index:end_index, ]
+  })
+  return(split_data)
+}
+
+# Function to filter rows based on specified kinship values
+filter_kinship <- function(input_file, kinship_value) {
+  # Read the Excel file
+  data <- read_excel(input_file)
+  
+  # Filter rows with specified kinship value
+  filtered_data <- data %>%
+    filter(Kinship == kinship_value)
+  
+  return(filtered_data)
+}
+
+# Define the kinship values
+kinship_values <- c('sib')
+
+# Define the maximum number of rows per chunk to avoid exceeding Excel limits
+max_rows_per_chunk <- 1048576 - 1  # 1 row for headers
+
+# Iterate through each kinship value
+for (kinship_value in kinship_values) {
+  # Initialize an empty data frame to store filtered data for the current kinship value
+  aggregated_filtered_data <- data.frame()
+  
+  # Iterate through each Excel file
+  for (file in excel_files) {
+    # Filter rows based on the current kinship value
+    filtered_data <- filter_kinship(file, kinship_value)
+    
+    # Aggregate filtered data
+    aggregated_filtered_data <- rbind(aggregated_filtered_data, filtered_data)
+  }
+  
+  # Convert Value column to numeric if it exists
+  if ("Value" %in% colnames(aggregated_filtered_data)) {
+    aggregated_filtered_data$Value <- as.numeric(aggregated_filtered_data$Value)
+  }
+  
+  # Split the aggregated data if it exceeds the row limit
+  if (nrow(aggregated_filtered_data) > max_rows_per_chunk) {
+    # Split the DataFrame into chunks
+    split_data <- split_dataframe(aggregated_filtered_data, max_rows_per_chunk)
+    
+    # Save each chunk to a separate Excel file
+    for (i in seq_along(split_data)) {
+      output_file <- file.path(output_folder, paste0("filtered_", kinship_value, "_part_", i, ".xlsx"))
+      write_xlsx(split_data[[i]], output_file)
+      cat("Filtered data for kinship value", kinship_value, "part", i, "saved to:", output_file, "\n")
+    }
+  } else {
+    # Save the filtered data to a single Excel file
+    output_file <- file.path(output_folder, paste0("filtered_", kinship_value, ".xlsx"))
+    write_xlsx(aggregated_filtered_data, output_file)
+    cat("Filtered data for kinship value", kinship_value, "saved to:", output_file, "\n")
+  }
+}
+
+
