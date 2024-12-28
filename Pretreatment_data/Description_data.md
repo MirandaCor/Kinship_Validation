@@ -10,3 +10,5 @@ The output expected:
 
 
 ![Description](Output_rearrangement.png)
+
+With this it is possible to start the data processing.
