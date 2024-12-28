@@ -1,1 +1,1 @@
-![Description](/ScreenMatch_CandidateList.png)
+![Description](ScreenMatch_CandidateList.png)
