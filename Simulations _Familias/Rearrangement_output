@@ -1,0 +1,67 @@
+
+#####
+# libraries
+library(readr)
+library(dplyr)
+library(tidyr)
+library(openxlsx)
+library(stringr)
+#Assigh kinship of simulation 
+person1 <- F #"Father"
+person2 <- S #"Son"
+# Read output of simulated alleles on true and false hypothesis
+data <- read.table("C:/Users/Miranda Córdova/Desktop/Miranda_dnaview/Simulación_LR/Simular_perfiles_familias_vs_dnaview/SimulationRawData_pi_21.txt",
+                   header=FALSE,skip=1,sep="\t",stringsAsFactors=FALSE)
+
+# Sellect and rename columns 
+data <- data %>%
+  #check number of columns with information 
+  select(1:5, 7, 8, 10, 11) %>%
+  #Assign name of columns
+  rename(Num.Simulation = V1,
+         Marker = V2,
+         TRUE.PED = V3,
+         logLikelihod_h1 = V4,
+         logLikelihod_h2 = V5,
+         A_Allele1 = V7,
+         A_Allele2 = V8,
+         B_Allele1 = V10,
+         B_Allele2 = V11)
+
+# Crear columna SAMPLE
+data <- data %>%
+  mutate(SAMPLE = paste(Num.Simulation, TRUE.PED, sep = "-"))
+
+# Transformar datos reorganizando padre e hijo en un formato largo
+rearranged_data <- data %>%
+  pivot_longer(cols = matches("^(A|B)_"),  # Matches columns starting with "A_" or "B_"
+               names_to = c("Role", "Allele"),
+               names_pattern = "(A_|B_)(Allele[12])",
+               values_to = "Value") %>%
+  mutate(SAMPLE = paste(SAMPLE, Role, sep = "-")) %>%
+  select(SAMPLE, Marker, Allele, Value)
+
+# C columnas separadas para cada alelo y marcador
+df_pivot <- rearranged_data %>%
+  unite("Marker_Allele", Marker, Allele, sep = "_") %>%
+  pivot_wider(names_from = Marker_Allele, values_from = Value) %>%
+  rename_with(~ gsub("_Allele", " ", .x, fixed = TRUE))%>%
+  mutate(
+    # Extract the first number before '-'
+    sim_number = as.integer(str_extract(SAMPLE, "^[0-9]+")),
+    # Extract h1 or h2
+    hypothesis = ifelse(str_detect(SAMPLE, "h1"), "01", "02"),
+    # Assign role based on keywords
+    role = case_when(
+      str_detect(SAMPLE, "A_") ~ person1,
+      str_detect(SAMPLE, "B_")  ~ person2),
+    # Format the final SAMPLE column
+    SAMPLE = sprintf("%06d%s %s", sim_number, hypothesis, role)
+  ) %>%
+  select(-sim_number, -hypothesis, -role)  # Remove intermediate columns
+
+
+# Save file in Excel
+sheet <- list("data" = data, "perfiles" = df_pivot, "rearranged_data" = rearranged_data)
+write.xlsx(sheet, "C:/Users/Miranda Córdova/Desktop/Miranda_dnaview/6000perfiles_raw_markers_pi.xlsx")
+
