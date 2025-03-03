@@ -30,4 +30,4 @@ If simulating parent-child pairs: The child inherits one allele from each parent
 If simulating full siblings: Each sibling inherits alleles based on Mendelian segregation.
 This process is repeated for each of the 15 or 21 markers.
 
-Step 4: 
+Step 4: Use the SimulationRawData.txt file as input in Rearrangement_output.R to restructure the simulated profiles, organizing them by rows for further analysis.
