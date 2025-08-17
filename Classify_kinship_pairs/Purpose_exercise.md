@@ -1,3 +1,4 @@
+\alignment 
 The purpose of this section is to compare non-genetic data with likelihood ratios (LR) obtained from pairwise analysis. Since kinship assumptions are necessary in this 
 exercise—given that missing person case files do not include registered familial relationships—verification is only possible with respect to the missing person. However, 
 conducting this analysis within a relatives' database is crucial.
