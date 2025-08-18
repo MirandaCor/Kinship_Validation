@@ -18,3 +18,5 @@ among reported missing persons.
 
 While it is not possible to fully verify all data in the context of this exercise, within a forensic laboratory, a more selective approach can be applied to determine 
 which features are most relevant for confirming these relationships.
+
+This exercise is the first step in verifying the relationship within a single family unit and distinguishing it from other missing persons' files who are searching for someone else. It helps to classify other relationships and compare non-genetic information. We chose to create a single document containing the available information and compare it with the LR (Likelihood Ratio) value to find related cases. Although it's much more convenient to use indexes instead of pasting data, continuous verification and management by other users without programming experience were necessary.
