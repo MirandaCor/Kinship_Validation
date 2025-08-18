@@ -20,8 +20,7 @@ library(purrr)
 # 
 # This approach ensures that we can systematically identify inconsistencies 
 #while preserving the integrity of the data. Ultimately, it helps us compile 
-#the necessary information to compare records between relatives of 
-#missing persons.
+#the necessary information to compare records between relatives.
 # 
 
 #Read data
@@ -192,38 +191,38 @@ determine_relationship <- function(data) {
   data$clasiffication <- dplyr::case_when(
     # Condiciones para 'Grandparent'
     ((data$FAM_Pedigree %in% c("F", "M") & grepl("[DEST]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[FM]$", data$VIC_Sample_info))) ~ "Grandparent",
+       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[FM]$", data$VIC_Sample_info))) ~ "Possible Grandparent",
     
     # Condiciones para 'Sibling'
-    ((data$FAM_Pedigree %in% c("H", "I") & grepl("[HI]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("F", "M", "R", "Z") & grepl("[RZFM]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[DEST]$", data$VIC_Sample_info))) ~ "Sibling",
+    ((data$FAM_Pedigree %in% c("F", "M", "R", "Z") & grepl("[RZFM]$", data$VIC_Sample_info)) |
+       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[DEST]$", data$VIC_Sample_info))) |      
+      ((data$FAM_Folio == data$VIC_Folio) & 
+         (data$FAM_Pedigree %in% c("D", "E", "S", "T", "J")) &
+         (grepl("[DESTJ]$", data$VIC_Sample_info)))~ " Possible Sibling",
     
     # Condiciones para 'Uncle'
     ((data$FAM_Pedigree %in% c("A", "B", "C", "U") & grepl("[DEST]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[ABCU]$", data$VIC_Sample_info))) ~ "Uncle-",
+       (data$FAM_Pedigree %in% c("D", "E", "S", "T") & grepl("[ABCU]$", data$VIC_Sample_info))) ~ "Possible Uncle-",
     
     # Condiciones para 'Parent'
     ((data$FAM_Pedigree %in% c("S", "T", "D", "E") & grepl("[QP]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("Q", "P") & grepl("[STDE]$", data$VIC_Sample_info))) ~ "Parent",
+       (data$FAM_Pedigree %in% c("Q", "P") & grepl("[STDE]$", data$VIC_Sample_info))) |
+        ((data$FAM_Folio == data$VIC_Folio) &
+         (data$FAM_Pedigree %in% c("R", "Z", "F", "M")) &
+         (grepl("[O]$", data$VIC_Sample_info))) |
+        ((data$FAM_Folio == data$VIC_Folio) &
+         (data$FAM_Pedigree %in% c("O")) &
+         (grepl("[RZFM]$", data$VIC_Sample_info))) |~ " Possible Parent ",
     
     # Condiciones para 'Half-sibling'
     ((data$FAM_Pedigree %in% c("H", "I") & grepl("[ABCU]$", data$VIC_Sample_info)) |
-       (data$FAM_Pedigree %in% c("A", "B", "C", "U") & grepl("[HI]$", data$VIC_Sample_info))) ~ "Half-sibling",
+       (data$FAM_Pedigree %in% c("H", "I") & grepl("[HI]$", data$VIC_Sample_info)) |
+       (data$FAM_Pedigree %in% c("A", "B", "C", "U") & grepl("[HI]$", data$VIC_Sample_info))) ~ " Possible Half-sibling",
     
     # Condiciones para true kinship (Sibling)
     ((data$FAM_Folio == data$VIC_Folio) & 
        (data$FAM_Pedigree %in% c("U", "A", "B", "C", "J")) &
-       (grepl("[UABC]$", data$VIC_Sample_info))) |
-      ((data$FAM_Folio == data$VIC_Folio) & 
-         (data$FAM_Pedigree %in% c("F", "M")) &
-         (grepl("[RZ]$", data$VIC_Sample_info))) |
-      ((data$FAM_Folio == data$VIC_Folio) & 
-         (data$FAM_Pedigree %in% c("R", "Z")) &
-         (grepl("[FM]$", data$VIC_Sample_info))) |
-      ((data$FAM_Folio == data$VIC_Folio) & 
-         (data$FAM_Pedigree %in% c("D", "E", "S", "T", "J")) &
-         (grepl("[DESTJ]$", data$VIC_Sample_info))) ~ "True-Sibling",
+       (grepl("[UABC]$", data$VIC_Sample_info)))  ~ "True-Sibling",
     
     # Condiciones para Parent-Child
     ((data$FAM_Folio == data$VIC_Folio) &
@@ -234,16 +233,10 @@ determine_relationship <- function(data) {
          (grepl("[TSDE]$", data$VIC_Sample_info))) |
       ((data$FAM_Folio == data$VIC_Folio) &
          (data$FAM_Pedigree %in% c("F", "M")) &
-         (grepl("[HIJ]$", data$VIC_Sample_info))) |
+         (grepl("[KJ]$", data$VIC_Sample_info))) |
       ((data$FAM_Folio == data$VIC_Folio) &
-         (data$FAM_Pedigree %in% c("H", "I", "J")) &
-         (grepl("[FM]$", data$VIC_Sample_info))) |
-      ((data$FAM_Folio == data$VIC_Folio) &
-         (data$FAM_Pedigree %in% c("R", "Z", "F", "M")) &
-         (grepl("[O]$", data$VIC_Sample_info))) |
-      ((data$FAM_Folio == data$VIC_Folio) &
-         (data$FAM_Pedigree %in% c("O")) &
-         (grepl("[RZFM]$", data$VIC_Sample_info))) |
+         (data$FAM_Pedigree %in% c("K", "J")) &
+         (grepl("[FM]$", data$VIC_Sample_info))) |      
       ((data$FAM_Folio == data$VIC_Folio) &
          (data$FAM_Pedigree %in% c("U", "A", "B", "C", "J")) &
          (grepl("[MF]$", data$VIC_Sample_info))) |
