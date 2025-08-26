@@ -1,0 +1,81 @@
+library(dplyr)
+library(readxl)
+library(writexl)
+library(dplyr)
+
+# Load data
+profile <- read_excel("C:\\Users\\Miranda Córdova\\Desktop\\Miranda_dnaview\\Simulación_LR\\Simular_perfiles_familias_vs_dnaview\\perfiles_raw_21markers_pi.xlsx", sheet = 'perfiles')
+profile <- as.data.frame(profile) # data frame 
+class(profile)
+
+ -------------------------------
+# Parameters: choose proportions
+# -------------------------------
+n_pat <- 1       # number of "true" profiles (h1 group)
+n_nonpat <- 749  # number of "non-true" profiles (h2 group)
+kit <- 'glob'    # kit identifier (not used below but kept as parameter)
+
+# -------------------------------
+# Separate profiles containing "h1" and "h2"
+# -------------------------------
+profile_h1 <- profile %>% filter(grepl("-h1-", SAMPLE))
+profile_h2 <- profile %>% filter(grepl("-h2-", SAMPLE))
+
+# -------------------------------
+# Create a 'base' column to link pairs (remove suffixes hijo/padre)
+# -------------------------------
+profile_h1 <- profile_h1 %>%
+  mutate(base = gsub("-(hijo|padre)", "", SAMPLE))
+
+profile_h2 <- profile_h2 %>%
+  mutate(base = gsub("-(hijo|padre)", "", SAMPLE))
+
+# -------------------------------
+# Randomly select unique bases for "h1"
+# -------------------------------
+set.seed(123)  # reproducibility
+selected_bases_h1 <- sample(unique(profile_h1$base), n_pat)
+
+profile_selected_h1 <- profile_h1 %>% 
+  filter(base %in% selected_bases_h1)
+
+# -------------------------------
+# Randomly select unique bases for "h2"
+# -------------------------------
+set.seed(124)  # reproducibility
+selected_bases_h2 <- sample(unique(profile_h2$base), n_nonpat)
+
+profile_selected_h2 <- profile_h2 %>% 
+  filter(base %in% selected_bases_h2)
+
+# -------------------------------
+# Merge "h1" and "h2" selections
+# -------------------------------
+profile_selected <- bind_rows(profile_selected_h1, profile_selected_h2)
+
+# Sort by 'base' and then by SAMPLE
+profile_selected <- profile_selected %>% arrange(base, SAMPLE)
+
+# -------------------------------
+# Reformat SAMPLE names to DNA key format
+# -------------------------------
+profile_selected <- profile_selected %>%
+  # Pad numeric prefix to 4 digits
+  mutate(SAMPLE = str_replace(SAMPLE, "^\\d{1,3}(?=-)", 
+                              function(x) sprintf("%04d", as.numeric(x)))) %>%
+  # Replace identifiers
+  mutate(SAMPLE = str_replace(SAMPLE, "-h1-", "01 ")) %>%
+  mutate(SAMPLE = str_replace(SAMPLE, "-h2-", "02 ")) %>%
+  mutate(SAMPLE = str_replace(SAMPLE, "hijo$", "S")) %>%
+  mutate(SAMPLE = str_replace(SAMPLE, "padre$", "F")) %>%
+  mutate(SAMPLE = str_replace(SAMPLE, "HNO$", "U"))
+
+# -------------------------------
+# Preview results
+# -------------------------------
+head(profile_selected)
+
+# -------------------------------
+# Save final dataframe to Excel file
+# -------------------------------
+write_xlsx(profile_seleccionados,paste0( "C:/Users/Miranda Córdova/Desktop/Miranda_dnaview/Simulación_LR/Simular_perfiles_familias_vs_dnaview/ident_sib_",npat,"h1_",nnopat,"h2.xlsx"))
